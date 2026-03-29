@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     name:{
@@ -45,6 +46,16 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpires:{type:String, select:false},
 
 }, {timestamps:true })
+
+//hash the password before saving
+userSchema.pre("save", async function () {
+    if(!this.isModified("password")) return;
+    this.password = await bcrypt.hash(this.password, 12)
+});
+
+userSchema.methods.comparePassword = async function (clearTextPassword) {
+    return bcrypt.compare(clearTextPassword, this.password)
+};
 
 export default mongoose.model("User",userSchema)
 //This takes your structural blueprint (userSchema) and

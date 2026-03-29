@@ -9,7 +9,12 @@ class RegisterDto extends BaseDto {
 
         // password: Joi.string().message("Password Must contain 8 chars minimum")
         //                      .min(8).required(),
-        password: Joi.string().min(8).required().message("Password must contain 8 chars minimum"),
+        password: Joi.string()
+            .min(8)
+            .pattern(/(?=.*[A-Z])(?=.*\d)/)
+            .message(
+                "Password must contain at least one uppercase letter and one digit"
+            ).required(),
     role: Joi.string().valid("customer", "seller").default("customer")                             
     })
 }
