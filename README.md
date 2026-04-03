@@ -512,3 +512,4 @@ Every module is fully self-contained. Shared utilities live in `common/` and are
 - [ ] Add helmet.js for security headers
 - [ ] Set up logging (Winston/Pino)
 - [ ] Configure CORS whitelist
+- [ ] Badge Test
