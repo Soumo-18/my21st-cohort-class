@@ -432,6 +432,48 @@ npm run dev
 
 ---
 
+## Available Scripts
+
+```bash
+npm run dev        # Start development server with nodemon
+npm run db:up      # Start MongoDB container
+npm run db:down    # Stop MongoDB container
+npm start          # Production server
+```
+
+---
+
+## Testing the API
+
+```bash
+# Register a new user
+curl -X POST http://localhost:4000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John","email":"john@example.com","password":"Pass123","role":"customer"}'
+
+# Login
+curl -X POST http://localhost:4000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"Pass123"}'
+
+# Access protected route
+curl http://localhost:4000/api/auth/me \
+  -H "Authorization: Bearer <your-access-token>"
+```
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| MongoDB connection failed | Ensure Docker is running: `npm run db:up` |
+| JWT verification failed | Check JWT secrets match in `.env` |
+| Email not sending | Verify SMTP credentials in `.env` |
+| CORS errors | Add `cors` middleware in `app.js` |
+
+---
+
 ## Module Expansion Pattern
 
 To add a new feature module (e.g. `products`), follow this structure:
@@ -455,3 +497,18 @@ app.use("/api/products", productRoute);
 ```
 
 Every module is fully self-contained. Shared utilities live in `common/` and are imported as needed.
+
+---
+
+## Production Deployment
+
+- [ ] Set `NODE_ENV=production`
+- [ ] Use strong JWT secrets (min 32 chars)
+- [ ] Enable HTTPS only
+- [ ] Set secure cookie flags: `secure: true, sameSite: 'strict'`
+- [ ] Use managed MongoDB (Atlas/DocumentDB)
+- [ ] Use production SMTP (SendGrid/AWS SES)
+- [ ] Enable rate limiting
+- [ ] Add helmet.js for security headers
+- [ ] Set up logging (Winston/Pino)
+- [ ] Configure CORS whitelist

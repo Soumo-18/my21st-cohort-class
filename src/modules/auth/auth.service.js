@@ -4,6 +4,8 @@ import {generateResetToken,generateAccessToken,generateRefreshToken,verifyAccess
 
 import User from './auth.model.js'
 
+import { sendVerificationEmail, sendResetPasswordEmail, sendOrderConfirmationEmail } from '../../common/config/email.js'
+
 const hashToken = (token)=>{
     crypto.createHash("sha256").update(token).digest("hex")
 }
@@ -27,6 +29,9 @@ const register= async ({ name, email, password, role})=>{
 
     //to do send an email to user with token: rawToken
     
+    // we send the rawtoken to the user so they can click the link,
+    //but the db only stores the hashedTOKen for security
+    await sendVerificationEmail( email, rawToken)
 
 
 //Scrubbing Sensitive Data
@@ -110,7 +115,8 @@ const logout = async(userId) =>{
 }
 
 const forgotPassword = async(email)=>{
-    const user = await User.findOne(email)
+    const user = await User.findOne({ email })
+
     if(!user) throw ApiError.notFound("No Account with that Email");
 
     const {rawToken,hashedToken} = generateResetToken();
@@ -118,6 +124,8 @@ const forgotPassword = async(email)=>{
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
     await user.save()
+
+    await sendResetPasswordEmail( user.email, rawToken)
 }
 
 export {register, login, refresh, logout, forgotPassword}

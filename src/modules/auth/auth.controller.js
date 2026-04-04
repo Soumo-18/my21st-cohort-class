@@ -14,7 +14,7 @@ const register = async(req,res)=> {
   // once the server hands back the sanitized user object the controller uses ApiResponse.created to fromat a nice, standardized JSON reponse with a 201
     const user = await authService.register(req.body)
 
-    ApiResponse.created(
+   return ApiResponse.created(
       res,
        "Registration Succcessful.Please Verify Your EMAIL",
         user
@@ -23,7 +23,7 @@ const register = async(req,res)=> {
 
 const login = async (req,res) =>{
   const { user, accessToken, refreshToken} = await authService.login(req.body);
-
+ //1. sEND THE REFRESH TOKEN in a cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure:process.env.NODE_ENV=== "production",
@@ -31,10 +31,20 @@ const login = async (req,res) =>{
     maxAge: 7 * 24 *60 *60 *1000, // 7 DAYS
   })
 
+  //2. Send the Access token in a cokie( requires cookie-parser to read later)
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 15 * 60 * 1000, // 15 mins
+  })
+
+  //3. Send both tokens in the json repsonse 
+
   ApiResponse.ok(
     res,
     "Login Successful",
-    {user, accessToken}
+    {user, accessToken, refreshToken}
   )
 }
 
