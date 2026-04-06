@@ -25,7 +25,7 @@ const verifyRefreshToken =(token)=>{
 }
 
 const generateResetToken =()=>{
-    const rawToken = crypto.randomBytes(32) 
+    const rawToken = crypto.randomBytes(32).toString("hex")
     //This generates 32 bytes of cryptographically strong,
     //  unpredictable random data.
 //Why not use Math.random()? Math.random() is predictable.
