@@ -5,6 +5,7 @@ import {generateResetToken,generateAccessToken,generateRefreshToken,verifyAccess
 import User from './auth.model.js'
 
 import { sendVerificationEmail, sendResetPasswordEmail, sendOrderConfirmationEmail } from '../../common/config/email.js'
+import crypto from 'crypto'
 
 const hashToken = (token)=>{
     crypto.createHash("sha256").update(token).digest("hex")
@@ -31,7 +32,12 @@ const register= async ({ name, email, password, role})=>{
     
     // we send the rawtoken to the user so they can click the link,
     //but the db only stores the hashedTOKen for security
-    await sendVerificationEmail( email, rawToken)
+    // Don't let email failure crash registration — user is already created
+    try {
+        await sendVerificationEmail( email, rawToken)
+    } catch (err) {
+        console.error("Failed To Send Verification Email:", err.message)
+    }
 
 
 //Scrubbing Sensitive Data
@@ -68,6 +74,8 @@ const login = async ({email,password})=>{
     if(!user) throw ApiError.unauthorized("Invalid EMail or Passwored");
 
     //somehow I'll check password
+    const isMatch = await user.comparePassword(password)
+    if(!isMatch) throw ApiError.unauthorized("Invalid EMail or Passwored")
 
     if(!user.isVerified) {
         throw ApiError.forbidden("Please verify your email before login")
@@ -93,9 +101,10 @@ const refresh = async(token)=>{
 
     const user = await User.findById(decoded.id).select("+refreshToken");
     if(!user) throw ApiError.unauthorized("User not found");
-
+   
+    // Verify the refresh token matches what's stored (prevents reuse of old tokens)
     if(user.refreshToken !== hashToken(token)){
-        throw ApiError.unauthorized("Invalid Refresh Token")
+        throw ApiError.unauthorized("Invalid Refresh Token - Please LOGIN again")
     }
 
     const accessToken= generateAccessToken({id: user._id, role:user.role})
@@ -111,8 +120,16 @@ const logout = async(userId) =>{
     // user.refreshToken = undefined; // or user.refreshToken = null;
     // await user.save({ validateBeforeSave: false});
 
+    //cleared stored refresh oken so it can't be reused
     await User.findByIdAndUpdate(userId, {refreshToken:null})
 }
+
+// THE Difference
+//Setting a property to undefined and calling .save() tells Mongoose to completely 
+// delete the field from the database document.
+
+// Setting a property to null tells Mongoose to keep the field in the database,
+//  but explicitly set its value to null.
 
 const forgotPassword = async(email)=>{
     const user = await User.findOne({ email })
@@ -124,8 +141,63 @@ const forgotPassword = async(email)=>{
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
     await user.save()
-
-    await sendResetPasswordEmail( user.email, rawToken)
+    try {
+        await sendResetPasswordEmail( user.email, rawToken)
+    } catch (error) {
+        console.error("Failed to send reset email", error.message)
+    }
 }
 
-export {register, login, refresh, logout, forgotPassword}
+const resetPassword = async(token, newPassword) =>{
+    const hashedToken = hashToken(token)
+
+    const user = await User.findOne({
+        resetPasswordToken : hashedToken,
+        resetPasswordExpires :{ $gt:Date.now()},
+    }).select("+resetPasswordToken +resetPasswordExpires")
+
+    if(!user) throw ApiError.badRequest("Invalid or Expired Reset Token");
+
+    user.password = newPassword
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpires = undefined
+    await user.save()
+}
+const getMe= async(userId) =>{
+    const user = await User.findById(userId)
+    if(!user) throw ApiError.notFound("User Not Found");
+    
+    return user
+}
+
+const verifyEmail = async(token) =>{
+    const trimmed = String(token).trim()
+    if(!trimmed) throw ApiError.badRequest("Invalid or Expired Verification Token");
+    
+    const hashedInput = hashToken(trimmed)
+    
+    //Attempt 1 Looks in db for a user whose stored token matches the hashedInput
+    let user = await User.findOne({verificationToken : hashedInput}).select("+verificationToken")
+   //.select("+verificationToken") ensures Mongoose actually returns the token field 
+
+
+   //Attempt 2: If Attempt 1 failed (meaning no user was found), it tries looking for a user whose 
+   //stored token matches the exact, raw string that was passed in. This is the fallback for manual testing.
+   if(!user) {
+        user = await User.findOne({verificationToken : trimmed}).select("+verificationToken")
+    }
+
+    // if both attempts failed
+    if(!user) throw ApiError.badRequest("Invalid or Expired Verification Token");
+    
+    //updates the found user in db, and It sets isVerifies to true and uses
+    //$unset to completely delete the verificationToken field from the document
+    await User.findByIdAndUpdate(user._id, {
+        $set : { isVerified : true},
+        $unset : { verificationToken : 1},
+    })
+    
+    return user
+}
+
+export {register, login, refresh, logout, forgotPassword, resetPassword, getMe, verifyEmail}
