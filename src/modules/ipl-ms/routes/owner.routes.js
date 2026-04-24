@@ -12,7 +12,7 @@ router.post('/', controller.getAllOwners)
 
 
 //get owner by id
-router.get('/:id', controller.getOwnerByID)
+router.get('/:id', controller.getOwnerById)
 
 
 //update owner 
@@ -21,3 +21,7 @@ router.put('/:id', controller.updateOwner)
 
 //delete owner
 router.delete('/:id', controller.deleteOwner)
+
+
+
+export default router

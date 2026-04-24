@@ -13,7 +13,7 @@ const getAllOwners = async() => {
     return owners 
 }
 
-const getOwnerByID = async (id) => {
+const getOwnerById = async (id) => {
     const owner = await Owner.findById(id)
 
     if(!owner) {
@@ -48,4 +48,4 @@ const deleteOwner = async (id) => {
 
 
 
-export { createOwner, getAllOwners, getOwnerByID, updateOwner, deleteOwner}
+export { createOwner, getAllOwners, getOwnerById, updateOwner, deleteOwner}
