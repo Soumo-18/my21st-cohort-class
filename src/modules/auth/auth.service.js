@@ -6,6 +6,8 @@ import User from './auth.model.js'
 
 import { sendVerificationEmail, sendResetPasswordEmail, sendOrderConfirmationEmail } from '../../common/config/email.js'
 import crypto from 'crypto'
+import fs from 'node:fs'
+import imagekit from '../../common/config/imagekit.js'
 
 const hashToken = (token)=>{
     crypto.createHash("sha256").update(token).digest("hex")
@@ -77,9 +79,9 @@ const login = async ({email,password})=>{
     const isMatch = await user.comparePassword(password)
     if(!isMatch) throw ApiError.unauthorized("Invalid EMail or Passwored")
 
-    if(!user.isVerified) {
-        throw ApiError.forbidden("Please verify your email before login")
-    }
+    // if(!user.isVerified) {
+    //     throw ApiError.forbidden("Please verify your email before login")
+    // }
 
     const accessToken = generateAccessToken({id: user._id, role: user.role});
     const refreshToken = generateRefreshToken({id:user._id})
@@ -202,9 +204,34 @@ const verifyEmail = async(token) =>{
 
 const avatarUpload = async(userId, file) => {
     try{
+        const fileStream = fs.createReadStream(file.path) // Stream-> Instead of loading the whole image into memory, it reads a small chunk of data (a "buffer"
+        const uploadResponse = await imagekit.files.upload({
+            file:fileStream,
+            fileName:file.filename,
+            folder:"/users-avatars"
+        })
+        await User.findByIdAndUpdate(
+            userId,
+            { avatar: uploadResponse.url },
+            { new: true }
+        )
 
-    } catch (err) {
+        fs.unlinkSync(file.path)
 
+        return {
+            url: uploadResponse.url,
+            fileId: uploadResponse.fileId
+        }
+    } catch (error) {
+        try {
+            if(file.path && fs.existsSync(file.path) ) {
+                fs.unlinkSync(file.path)
+            }
+        } catch (error) {
+            console.error("Error Deleting Temp File : ", error)
+        }
+
+        throw error
     }
  }
 

@@ -116,7 +116,7 @@ const uploadAvatar = async (req, res) => {
       });
     }
 
-    const result = await authServiceService.avatarUpload(req.user.id, file);
+    const result = await authService.avatarUpload(req.user.id, file);
 
     // ApiResponse works as expected (takes 'res')
     return ApiResponse.ok(res, 'Avatar Uploaded Successfully', { avatarUrl: result.url });
