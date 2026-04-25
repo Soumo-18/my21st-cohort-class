@@ -9,6 +9,9 @@ import LoginDto from './dto/login.dto.js'
 import ForgotPasswordDto from './dto/forgot-password.dto.js'
 import ResetPasswordDto from './dto/reset_password.dto.js'
 import { authenticate } from './auth.middleware.js'
+import { updateOwner } from '../ipl-ms/services/owner.service.js'
+import { upload } from '../../common/middleware/multer.middleware.js'
+import { uploadAvatar } from './auth.controller.js'
 const router = Router()
 
 //when an http request POST hits /register, The Router catches it.But it doesn't
@@ -28,5 +31,7 @@ router.post('/forgot-password',validate(ForgotPasswordDto),controller.forgotPass
 router.put('/reset-password', validate(ResetPasswordDto), controller.resetPassword)
 
 router.get('/me', authenticate, controller.getMe)
+
+router.post('/avatar', authenticate, upload.single('avatar'), controller.uploadAvatar)
 
 export default router

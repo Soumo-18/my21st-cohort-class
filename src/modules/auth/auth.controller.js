@@ -1,6 +1,7 @@
 import * as authService from './auth.service.js'
 
 import ApiResponse from '../../common/utils/api-response.js'
+import ApiError from '../../common/utils/api-error.js'
 
 //Bcz of middleware, by the time the code reaches this controller,
 //we have a 100% guarantee that req.body contains a perfectly 
@@ -99,6 +100,40 @@ const getMe = async(req,res) =>{
  )
 }
 
+
+const uploadAvatar = async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      // 1. Create the error object (matches your class: 1 argument)
+      const err = ApiError.badRequest("No File Uploaded with field name 'avatar'");
+      
+      // 2. Manually send the response (since ApiError doesn't take 'res')
+      return res.status(err.statusCode).json({
+        success: false,
+        message: err.message
+      });
+    }
+
+    const result = await authServiceService.avatarUpload(req.user.id, file);
+
+    // ApiResponse works as expected (takes 'res')
+    return ApiResponse.ok(res, 'Avatar Uploaded Successfully', { avatarUrl: result.url });
+
+  } catch (error) {
+    console.error("Upload error:", error);
+    
+    // Create and send internal error
+    const err = ApiError.internal(error.message);
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
 export {
   
   register, 
@@ -106,7 +141,8 @@ export {
   refreshToken,
   verifyEmail, 
   forgotPassword, resetPassword,
-  getMe,
+  getMe, 
+  uploadAvatar
 
 }
 

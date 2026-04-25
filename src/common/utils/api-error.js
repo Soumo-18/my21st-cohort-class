@@ -6,7 +6,7 @@ class ApiError extends Error{
         Error.captureStackTrace(this, this.constructor)
     }
 
-    static badRequest(meassage="Bad Request"){
+    static badRequest(message="Bad Request"){
         return new ApiError(400,meassage)
     }
     static unauthorized(message="Unauthorized"){
@@ -17,11 +17,15 @@ class ApiError extends Error{
     }
 
     static forbidden(message="Forbidden"){
-        return new ApiError(412,message)
+        return new ApiError(403,message)
     }
 
     static notFound(message="Not Found"){
-        return new ApiError(412,message)
+        return new ApiError(404,message)
+    }
+
+    static internal(message="Internal Server Error") {
+        return new ApiError(500, message)
     }
 }
 

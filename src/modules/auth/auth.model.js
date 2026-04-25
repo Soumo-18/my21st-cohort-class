@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,//A boolean (true/false) tracking whether the user has verified their email. It starts as false by default.
         default:false,
     },
+    avatar:{
+        type:String,
+        default: false
+    },
     verificationToken:{type:String, select:false},
     refreshToken:{type:String, select:false},
     resetPasswordToken:{type:String, select:false},

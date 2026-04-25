@@ -200,4 +200,12 @@ const verifyEmail = async(token) =>{
     return user
 }
 
-export {register, login, refresh, logout, forgotPassword, resetPassword, getMe, verifyEmail}
+const avatarUpload = async(userId, file) => {
+    try{
+
+    } catch (err) {
+
+    }
+ }
+
+export {register, login, refresh, logout, forgotPassword, resetPassword, getMe, verifyEmail, avatarUpload}
