@@ -79,9 +79,9 @@ const login = async ({email,password})=>{
     const isMatch = await user.comparePassword(password)
     if(!isMatch) throw ApiError.unauthorized("Invalid EMail or Passwored")
 
-    // if(!user.isVerified) {
-    //     throw ApiError.forbidden("Please verify your email before login")
-    // }
+    if(!user.isVerified) {
+        throw ApiError.forbidden("Please verify your email before login")
+    }
 
     const accessToken = generateAccessToken({id: user._id, role: user.role});
     const refreshToken = generateRefreshToken({id:user._id})
